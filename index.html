@@ -16,23 +16,88 @@
   <!-- ===== MAIN MENU OVERLAY ===== -->
   <div id="main-menu" role="main" aria-label="เมนูหลัก">
     <div class="menu-scanlines"></div>
-    <div class="menu-content">
-      <div class="menu-badge">GH0ST-001</div>
-      <h1 class="menu-title">
-        <span class="menu-title-top">Ghost in the</span>
-        <span class="menu-title-bottom">System</span>
-      </h1>
-      <p class="menu-subtitle">คดีตรวจสอบภายใน — ผีในระบบ</p>
-      <div class="menu-divider"></div>
-      <div class="menu-buttons">
-        <button id="btn-new-game" class="menu-btn menu-btn-primary">
-          <span class="menu-btn-icon">&#9654;</span> เริ่มเกมใหม่
-        </button>
-        <button id="btn-load-game" class="menu-btn menu-btn-secondary">
-          <span class="menu-btn-icon">&#128194;</span> โหลดเกม
-        </button>
+    <div class="menu-particles" id="menu-particles"></div>
+
+    <div class="menu-layout">
+
+      <!-- LEFT — Branding -->
+      <div class="menu-left">
+        <div class="menu-badge">
+          <span class="menu-badge-dot"></span>GH0ST-001
+        </div>
+        <h1 class="menu-title">
+          <span class="menu-title-top">Ghost in the</span>
+          <span class="menu-title-bottom">System</span>
+        </h1>
+        <p class="menu-subtitle">ผีในระบบ — คดีตรวจสอบภายใน</p>
+        <div class="menu-info-strip">
+          <div class="menu-info-item">
+            <span class="menu-info-icon">🕵️</span>
+            <span>IT Audit Investigation</span>
+          </div>
+          <div class="menu-info-item">
+            <span class="menu-info-icon">⏱</span>
+            <span>ใช้เวลาประมาณ 15-20 นาที</span>
+          </div>
+          <div class="menu-info-item">
+            <span class="menu-info-icon">🎓</span>
+            <span>ICT25367 — Visual Novel</span>
+          </div>
+        </div>
       </div>
-      <p class="menu-footer">IT Audit Interactive Experience</p>
+
+      <!-- RIGHT — Controls -->
+      <div class="menu-right">
+        <div class="menu-card">
+
+          <div class="menu-card-header">
+            <span class="menu-card-dot red"></span>
+            <span class="menu-card-dot yellow"></span>
+            <span class="menu-card-dot green"></span>
+            <span class="menu-card-label">TERMINAL</span>
+          </div>
+
+          <div class="menu-buttons">
+            <button id="btn-new-game" class="menu-btn menu-btn-primary">
+              <span class="menu-btn-icon">▶</span>
+              <span class="menu-btn-text">
+                <span class="menu-btn-main">เริ่มเกมใหม่</span>
+                <span class="menu-btn-sub">New Game</span>
+              </span>
+            </button>
+            <button id="btn-load-game" class="menu-btn menu-btn-secondary">
+              <span class="menu-btn-icon">📂</span>
+              <span class="menu-btn-text">
+                <span class="menu-btn-main">โหลดเกม</span>
+                <span class="menu-btn-sub">Continue</span>
+              </span>
+            </button>
+          </div>
+
+          <div class="menu-divider"></div>
+
+          <!-- Volume Control -->
+          <div class="menu-settings">
+            <div class="menu-settings-title">⚙ ตั้งค่าเสียง</div>
+            <div class="volume-row">
+              <span class="volume-icon" id="vol-icon">🔊</span>
+              <input type="range" id="menu-volume" class="volume-slider"
+                     min="0" max="100" value="55" aria-label="ระดับเสียง" />
+              <span class="volume-value" id="vol-value">55</span>
+            </div>
+            <div class="volume-row" style="margin-top:8px;">
+              <label class="toggle-label">
+                <input type="checkbox" id="menu-mute-toggle" />
+                <span class="toggle-track"><span class="toggle-thumb"></span></span>
+                <span class="toggle-text">ปิดเสียง</span>
+              </label>
+            </div>
+          </div>
+
+        </div>
+        <p class="menu-footer">Quantum FinTech · IT Audit Interactive Experience</p>
+      </div>
+
     </div>
   </div>
 

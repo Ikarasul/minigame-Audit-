@@ -83,6 +83,7 @@ let state = DEFAULT_STATE();
 function showMainMenu() {
   els.mainMenu.style.display      = 'flex';
   els.gameContainer.style.display = 'none';
+  syncMenuControls();
 }
 
 function hideMainMenu() {
@@ -129,6 +130,81 @@ function loadGame() {
     console.warn('โหลดเกมล้มเหลว:', e);
     return false;
   }
+}
+
+// ── Menu particles ─────────────────────────────────────────
+function spawnMenuParticles() {
+  const container = document.getElementById('menu-particles');
+  if (!container) return;
+  for (let i = 0; i < 28; i++) {
+    const p = document.createElement('div');
+    p.className = 'menu-particle';
+    p.style.cssText = `
+      left: ${Math.random() * 100}%;
+      top: ${80 + Math.random() * 20}%;
+      width: ${1 + Math.random() * 2.5}px;
+      height: ${1 + Math.random() * 2.5}px;
+      opacity: 0;
+      animation-duration: ${6 + Math.random() * 12}s;
+      animation-delay: ${Math.random() * 8}s;
+    `;
+    container.appendChild(p);
+  }
+}
+spawnMenuParticles();
+
+// ── Menu volume controls ────────────────────────────────────
+const menuVolSlider = document.getElementById('menu-volume');
+const menuMuteToggle = document.getElementById('menu-mute-toggle');
+const volValue = document.getElementById('vol-value');
+const volIcon = document.getElementById('vol-icon');
+
+function updateVolIcon(vol, muted) {
+  if (!volIcon) return;
+  if (muted || vol == 0) volIcon.textContent = '🔇';
+  else if (vol < 40) volIcon.textContent = '🔈';
+  else if (vol < 70) volIcon.textContent = '🔉';
+  else volIcon.textContent = '🔊';
+}
+
+function applyVolume() {
+  if (!menuVolSlider) return;
+  const vol = parseInt(menuVolSlider.value);
+  const muted = menuMuteToggle?.checked ?? false;
+  bgmPlayer.volume = muted ? 0 : vol / 100;
+  bgmPlayer.muted = muted;
+  if (volValue) volValue.textContent = vol;
+  menuVolSlider.style.setProperty('--vol-pct', vol + '%');
+  updateVolIcon(vol, muted);
+  state.isMuted = muted;
+  updateMuteBtn();
+}
+
+if (menuVolSlider) {
+  menuVolSlider.addEventListener('input', applyVolume);
+}
+if (menuMuteToggle) {
+  menuMuteToggle.addEventListener('change', applyVolume);
+}
+if (volIcon) {
+  volIcon.addEventListener('click', () => {
+    if (menuMuteToggle) {
+      menuMuteToggle.checked = !menuMuteToggle.checked;
+      applyVolume();
+    }
+  });
+}
+
+// Sync HUD mute button → menu toggle when returning to menu
+function syncMenuControls() {
+  if (menuVolSlider) {
+    const vol = Math.round(bgmPlayer.volume * 100);
+    menuVolSlider.value = vol;
+    if (volValue) volValue.textContent = vol;
+    menuVolSlider.style.setProperty('--vol-pct', vol + '%');
+  }
+  if (menuMuteToggle) menuMuteToggle.checked = state.isMuted;
+  updateVolIcon(Math.round(bgmPlayer.volume * 100), state.isMuted);
 }
 
 els.btnNewGame.addEventListener('click', startNewGame);
