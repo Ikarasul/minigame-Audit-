@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ผีในระบบ — Ghost in the System</title>
+  <meta name="description" content="เกม Visual Novel สอบสวน IT Audit ค้นหาตัวคนร้ายในระบบก่อนรุ่งสาง" />
+  <!-- Kanit: Thai-optimised font with full weight range -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ===== MAIN MENU OVERLAY ===== -->
+  <div id="main-menu" role="main" aria-label="เมนูหลัก">
+    <div class="menu-scanlines"></div>
+    <div class="menu-content">
+      <div class="menu-badge">GH0ST-001</div>
+      <h1 class="menu-title">
+        <span class="menu-title-top">Ghost in the</span>
+        <span class="menu-title-bottom">System</span>
+      </h1>
+      <p class="menu-subtitle">คดีตรวจสอบภายใน — ผีในระบบ</p>
+      <div class="menu-divider"></div>
+      <div class="menu-buttons">
+        <button id="btn-new-game" class="menu-btn menu-btn-primary">
+          <span class="menu-btn-icon">&#9654;</span> เริ่มเกมใหม่
+        </button>
+        <button id="btn-load-game" class="menu-btn menu-btn-secondary">
+          <span class="menu-btn-icon">&#128194;</span> โหลดเกม
+        </button>
+      </div>
+      <p class="menu-footer">IT Audit Interactive Experience</p>
+    </div>
+  </div>
+
+  <!-- ===== GAME CONTAINER ===== -->
+  <div id="game-container" style="display:none">
+
+    <!-- Top HUD -->
+    <header id="hud">
+      <div id="hud-left">
+        <h2 id="hud-title">แฟ้มคดี GH0ST-001</h2>
+
+        <!-- Ethics / Integrity meter -->
+        <div id="ethics-wrapper">
+          <div class="ethics-header">
+            <span class="ethics-label">ความซื่อสัตย์</span>
+            <span id="ethics-value">50</span>
+          </div>
+          <div id="ethics-track">
+            <div id="ethics-fill"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="hud-controls">
+        <button id="fast-forward-btn" class="hud-btn" title="Fast Forward">⏩ 2x</button>
+        <button id="btn-mute" class="hud-btn" title="เปิด/ปิดเสียง" aria-pressed="false">
+          <span class="btn-icon" id="mute-icon">&#9835;</span> เปิด/ปิดเสียง
+        </button>
+        <button id="btn-save" class="hud-btn" title="บันทึกเกม">
+          <span class="btn-icon">&#128190;</span> บันทึกเกม
+        </button>
+        <button id="btn-load" class="hud-btn" title="โหลดเกม">
+          <span class="btn-icon">&#128194;</span> โหลดเกม
+        </button>
+        <button id="btn-evidence" class="hud-btn" title="กระดานหลักฐาน">
+          <span class="btn-icon">&#9741;</span> กระดานหลักฐาน
+        </button>
+        <button id="btn-audit" class="hud-btn" title="รายงานการตรวจสอบ" style="display:none">
+          <span class="btn-icon">&#128196;</span> รายงานการตรวจสอบ
+        </button>
+      </div>
+    </header>
+
+    <!-- Scene / Background -->
+    <main id="scene">
+
+      <!-- Character display -->
+      <div id="character-area">
+        <div id="character-wrapper">
+          <img id="character-image" aria-label="ภาพตัวละคร" src="" alt="" style="display:none;" />
+          <div id="character-glitch-overlay"></div>
+        </div>
+      </div>
+
+      <!-- Location tag -->
+      <div id="location-tag">
+        <span id="location-text">ห้องเซิร์ฟเวอร์ บี — ชั้น 14</span>
+      </div>
+
+    </main>
+
+    <div id="choice-area"></div>
+
+    <!-- ===== DIALOGUE BOX ===== -->
+    <section id="dialogue-box">
+      <div id="dialogue-header">
+        <span id="speaker-name">ระบบ</span>
+        <span id="dialogue-status" class="blink">&#9646;</span>
+      </div>
+      <div id="dialogue-text-wrapper">
+        <p id="dialogue-text"></p>
+      </div>
+      <div id="dialogue-footer">
+        <button id="btn-next" title="ดำเนินต่อ">&#9654; ดำเนินต่อ</button>
+      </div>
+    </section>
+
+  </div><!-- /#game-container -->
+
+
+  <!-- ===== EVIDENCE BOARD MODAL ===== -->
+  <div id="evidence-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="evidence-title">
+    <div class="modal-backdrop"></div>
+    <div class="modal-panel">
+      <header class="modal-header">
+        <h2 id="evidence-title">&#9741; กระดานหลักฐาน</h2>
+        <button class="modal-close" id="close-evidence" aria-label="ปิด">&times;</button>
+      </header>
+      <div class="modal-body">
+        <div id="evidence-list" class="grid-layout">
+          <p class="empty-state">ยังไม่มีหลักฐาน</p>
+        </div>
+        <button id="present-evidence-btn" class="hidden" disabled>ยื่นหลักฐานชิ้นนี้</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== AUDIT QUIZ MODAL ===== -->
+  <div id="audit-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="audit-title">
+    <div class="modal-backdrop"></div>
+    <div class="modal-panel">
+      <header class="modal-header">
+        <h2 id="audit-title">&#128196; รายงานการตรวจสอบ</h2>
+        <button class="modal-close" id="close-audit" aria-label="ปิด">&times;</button>
+      </header>
+      <div class="modal-body">
+        <div id="audit-content">
+          <p class="quiz-question">สรุปคดี: สาเหตุหลักที่ทำให้ข้อมูลรั่วไหลในคดีนี้คืออะไร?</p>
+          <div class="quiz-options">
+            <label class="quiz-label">
+              <input type="radio" name="auditQ1" value="A"> A: ถูกโจมตีด้วย SQL Injection
+            </label>
+            <label class="quiz-label">
+              <input type="radio" name="auditQ1" value="B"> B: ไม่มีการจัดการ Terminated User และใช้ Shared Account
+            </label>
+          </div>
+          <button id="submit-audit-btn" class="quiz-submit-btn">ส่งรายงาน</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== LOG MINIGAME MODAL ===== -->
+  <div id="log-minigame-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="log-title">
+    <div class="modal-backdrop"></div>
+    <div class="modal-panel" style="max-width: 760px;">
+      <header class="modal-header">
+        <h2 id="log-title">&#128269; ฐานข้อมูล Access Log</h2>
+        <button class="modal-close" id="close-log-minigame" aria-label="ปิด" style="visibility:hidden;">&times;</button>
+      </header>
+      <div class="modal-body">
+        <div class="mg-brief">
+          <p><span class="mg-label">ภารกิจ:</span> หา <b>คู่ล็อกอินที่มาจาก IP เดียวกัน</b> แต่ <b>ต่าง User</b> — นั่นคือรอยรั่ว</p>
+        </div>
+
+        <div class="suspicion-meter">
+          <div class="suspicion-header">
+            <span>ระดับความน่าสงสัย</span>
+            <span id="suspicion-value">0%</span>
+          </div>
+          <div class="suspicion-track"><div id="suspicion-fill"></div></div>
+        </div>
+
+        <table id="log-table" class="data-table">
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>User ID</th>
+              <th>IP Address</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr data-user="NUN_Senior" data-ip="192.168.1.50"><td>02:05:11</td><td>NUN_Senior</td><td>192.168.1.50</td><td>VIEW_REPORT</td></tr>
+            <tr data-user="SYS_Cron"   data-ip="localhost"><td>02:10:00</td><td>SYS_Cron</td><td>localhost</td><td>BACKUP_DB</td></tr>
+            <tr data-user="OAT_Admin"  data-ip="192.168.1.105"><td>02:14:22</td><td>OAT_Admin</td><td>192.168.1.105</td><td>PULL_DATA</td></tr>
+            <tr data-user="ALICE_Dev"  data-ip="10.0.0.44"><td>02:15:05</td><td>ALICE_Dev</td><td>10.0.0.44</td><td>READ_API</td></tr>
+            <tr data-user="MANA_Dev"   data-ip="192.168.1.105"><td>02:17:40</td><td>MANA_Dev</td><td>192.168.1.105</td><td>PULL_DATA</td></tr>
+          </tbody>
+        </table>
+
+        <div id="log-feedback" class="mg-feedback"></div>
+
+        <div class="mg-footer">
+          <button id="btn-log-hint" class="mg-btn-ghost">💡 ขอคำใบ้ <span id="hint-count">(2)</span></button>
+          <button id="btn-confirm-log" class="mg-btn-primary" disabled>🔒 ยืนยันตรวจสอบ</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== EMAIL MINIGAME MODAL ===== -->
+  <div id="email-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="email-title">
+    <div class="modal-backdrop"></div>
+    <div class="modal-panel email-panel" style="max-width: 820px;">
+      <header class="modal-header">
+        <h2 id="email-title">&#128231; Inbox — OAT_Admin</h2>
+        <button class="modal-close" id="close-email-minigame" aria-label="ปิด">&times;</button>
+      </header>
+      <div class="modal-body email-body">
+        <div class="email-layout">
+          <aside class="email-list">
+            <div class="email-item" data-email="hr">
+              <div class="email-subject">HR: แจ้งกำหนดการวันหยุดประจำปี</div>
+              <div class="email-sender">HR Dept · 10:22</div>
+            </div>
+            <div class="email-item" data-email="system">
+              <div class="email-subject">System: Server Update Scheduled</div>
+              <div class="email-sender">Automated System · 13:05</div>
+            </div>
+            <div class="email-item unread" data-email="suspect">
+              <div class="email-subject">RE: การประเมินราคาฐานข้อมูลลูกค้า VIP (ด่วน)</div>
+              <div class="email-sender">J.Doe &lt;ext@protonmail.com&gt; · 01:47</div>
+            </div>
+            <div class="email-item" data-email="promo">
+              <div class="email-subject">Lazada: โค้ดส่งฟรีเดือนนี้!</div>
+              <div class="email-sender">Lazada Promo · 08:30</div>
+            </div>
+            <div class="email-item" data-email="team">
+              <div class="email-subject">ประชุมทีมพรุ่งนี้ 9 โมง</div>
+              <div class="email-sender">พี่นุ่น · เมื่อวาน</div>
+            </div>
+          </aside>
+          <section class="email-preview" id="email-preview">
+            <div class="email-empty">📬 เลือกอีเมลด้านซ้ายเพื่ออ่านเนื้อหา แล้วประเมินว่าเป็นอีเมลน่าสงสัยหรือไม่</div>
+          </section>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== CUSTOM GAME ALERT ===== -->
+  <div id="game-alert" class="modal hidden" role="dialog" aria-modal="true">
+    <div class="modal-backdrop"></div>
+    <div class="modal-panel game-alert-panel">
+      <div class="alert-icon" id="alert-icon">⚠</div>
+      <h3 id="alert-title">แจ้งเตือน</h3>
+      <p id="alert-message"></p>
+      <button id="alert-ok" class="mg-btn-primary">ตกลง</button>
+    </div>
+  </div>
+
+  <!-- ===== TOAST NOTIFICATION ===== -->
+  <div id="toast" role="alert" aria-live="assertive">
+    <div id="toast-icon">&#9863;</div>
+    <div id="toast-content">
+      <div id="toast-label">พบหลักฐาน</div>
+      <div id="toast-title"></div>
+    </div>
+    <button id="toast-dismiss" aria-label="ปิด">&times;</button>
+  </div>
+
+  <!-- ===== FINAL SCORE SCREEN OVERLAY ===== -->
+  <div id="final-score-screen" class="hidden">
+    <div class="score-box">
+      <h1 class="score-title">ผลการประเมิน IT Auditor</h1>
+      <div id="score-details"></div>
+      <button id="restart-btn" class="menu-btn menu-btn-primary" style="margin-top:30px;">กลับสู่เมนูหลัก</button>
+    </div>
+  </div>
+
+  <script src="story.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
