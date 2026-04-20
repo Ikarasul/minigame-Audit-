@@ -171,12 +171,13 @@ function applyVolume() {
   if (!menuVolSlider) return;
   const vol = parseInt(menuVolSlider.value);
   const muted = menuMuteToggle?.checked ?? false;
-  bgmPlayer.volume = muted ? 0 : vol / 100;
+  masterVolume = vol / 100;
+  state.isMuted = muted;
   bgmPlayer.muted = muted;
+  applyBgmVolume();
   if (volValue) volValue.textContent = vol;
   menuVolSlider.style.setProperty('--vol-pct', vol + '%');
   updateVolIcon(vol, muted);
-  state.isMuted = muted;
   updateMuteBtn();
 }
 
@@ -198,14 +199,24 @@ if (volIcon) {
 // Sync HUD mute button → menu toggle when returning to menu
 function syncMenuControls() {
   if (menuVolSlider) {
-    const vol = Math.round(bgmPlayer.volume * 100);
+    const vol = Math.round(masterVolume * 100);
     menuVolSlider.value = vol;
     if (volValue) volValue.textContent = vol;
     menuVolSlider.style.setProperty('--vol-pct', vol + '%');
   }
   if (menuMuteToggle) menuMuteToggle.checked = state.isMuted;
-  updateVolIcon(Math.round(bgmPlayer.volume * 100), state.isMuted);
+  updateVolIcon(Math.round(masterVolume * 100), state.isMuted);
 }
+
+// Start menu BGM on first user interaction (autoplay policy workaround)
+let menuBgmStarted = false;
+function tryStartMenuBgm() {
+  if (menuBgmStarted) return;
+  menuBgmStarted = true;
+  setBgm(BGM_MAIN, 0.7);
+}
+document.addEventListener('click', tryStartMenuBgm, { once: false });
+document.addEventListener('keydown', tryStartMenuBgm, { once: false });
 
 els.btnNewGame.addEventListener('click', startNewGame);
 
@@ -370,22 +381,65 @@ function flashHudBtn(btn) {
 // ────────────────────────────────────────────────────────────────
 // ระบบเสียง — BGM
 // ────────────────────────────────────────────────────────────────
+const BGM_MAIN = 'assets/audio/The_Final_Ledger_Entry_90sec.mp3';
+
 const bgmPlayer  = new Audio();
 bgmPlayer.loop   = true;
-bgmPlayer.volume = 0.55;
 
-function setBgm(path) {
+// Volume = master (user slider) × sceneMultiplier (mood)
+let masterVolume    = 0.55;
+let sceneMultiplier = 1.0;
+
+function applyBgmVolume() {
+  bgmPlayer.volume = state.isMuted ? 0 : masterVolume * sceneMultiplier;
+}
+
+function setBgm(path, multiplier = 1.0) {
+  sceneMultiplier = multiplier;
   if (!path) {
-    bgmPlayer.pause();
-    bgmPlayer.src    = '';
-    state.currentBgm = null;
+    fadeOutBgm();
     return;
   }
-  if (path === state.currentBgm) return;
-  state.currentBgm = path;
-  bgmPlayer.src    = path;
-  bgmPlayer.load();
+  if (path !== state.currentBgm) {
+    state.currentBgm = path;
+    bgmPlayer.src    = path;
+    bgmPlayer.load();
+  }
+  applyBgmVolume();
   bgmPlayer.play().catch(() => {});
+}
+
+function fadeOutBgm() {
+  const startVol = bgmPlayer.volume;
+  let step = 0;
+  const tick = setInterval(() => {
+    step += 0.08;
+    bgmPlayer.volume = Math.max(0, startVol * (1 - step));
+    if (step >= 1) {
+      clearInterval(tick);
+      bgmPlayer.pause();
+      bgmPlayer.src    = '';
+      state.currentBgm = null;
+    }
+  }, 60);
+}
+
+// Smoothly adjust only the multiplier (keeps track playing across scenes)
+function crossfadeToVolume(targetMultiplier) {
+  const start = sceneMultiplier;
+  const delta = targetMultiplier - start;
+  const steps = 20;
+  let i = 0;
+  const tick = setInterval(() => {
+    i++;
+    sceneMultiplier = start + (delta * i / steps);
+    applyBgmVolume();
+    if (i >= steps) {
+      sceneMultiplier = targetMultiplier;
+      applyBgmVolume();
+      clearInterval(tick);
+    }
+  }, 40);
 }
 
 function toggleMute() {
@@ -548,7 +602,12 @@ function renderScene(sceneId) {
   if (sceneData.character) setCharacter(sceneData.character);
   setSpeaker(sceneData.speaker || sceneData.character || 'ระบบ');
 
-  if ('bgm' in sceneData) setBgm(sceneData.bgm);
+  if ('bgm' in sceneData) {
+    setBgm(sceneData.bgm, sceneData.bgmVolume ?? 1.0);
+  } else if (sceneData.bgmVolume !== undefined) {
+    // Keep same track, just crossfade volume for mood change
+    crossfadeToVolume(sceneData.bgmVolume);
+  }
   if ('characterImage' in sceneData) setCharacterSprite(sceneData.characterImage);
   if ('animation' in sceneData) {
     setTimeout(() => setCharacterAnimation(sceneData.animation), 180);

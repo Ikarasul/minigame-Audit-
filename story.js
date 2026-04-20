@@ -11,6 +11,8 @@ const DIALOGUE_NODES = {
     character:       'system',
     location:        'สำนักงาน Quantum FinTech — ตี 2',
     backgroundImage: 'assets/images/bg_office_night.jpg',
+    bgm:             'assets/audio/The_Final_Ledger_Entry_90sec.mp3',
+    bgmVolume:       0.55,
     characterImage:  null,
     text:            "คุณคือ 'กาญจน์' IT Auditor รุ่นใหม่ไฟแรงแห่งบริษัท Quantum FinTech...\n\nเวลา 02:00 น. คืนวันหยุด ระบบแจ้งเตือนฉุกเฉินดังขึ้น! มีการดึงข้อมูลลูกค้า VIP ล็อตใหญ่ออกไปจากฐานข้อมูล\n\n[ รหัสคดี: GHOST-001 ]",
     choices: [
@@ -23,6 +25,7 @@ const DIALOGUE_NODES = {
     character:       'pnoon',
     location:        'สำนักงาน Quantum FinTech — ตี 2',
     backgroundImage: 'assets/images/bg_office_night.jpg',
+    bgmVolume:       0.50,
     characterImage:  'assets/images/รูปตัวละคร/พี่นุ้น/พี่นุ่น.png',
     text:            'กาญจน์! มาพอดีเลย มีการดึงข้อมูลออกไปจริงๆ เราต้องรีบหาตัวคนทำและปิดช่องโหว่ให้เจอก่อนเช้า เราควรเริ่มแกะรอยจากตรงไหนดี?',
     choices: [
@@ -36,6 +39,7 @@ const DIALOGUE_NODES = {
     character:       'pnoon',
     location:        'ห้องคอมพิวเตอร์ — ชั้น 14',
     backgroundImage: 'assets/images/bg_computer_screen.jpg',
+    bgmVolume:       0.40,
     characterImage:  'assets/images/รูปตัวละคร/พี่นุ้น/ท่าขอร้อง.png',
     text:            'ดีมาก พี่ดึง Log พื้นฐานมาให้แล้ว มีบัญชีของพนักงานหลายคนล็อกอินเข้ามาในช่วงเวลาเกิดเหตุ ลองใช้ทักษะของคุณวิเคราะห์ดูสิว่ามีอะไรผิดปกติไหม?',
     choices: [
@@ -49,6 +53,7 @@ const DIALOGUE_NODES = {
     character:       'you',
     location:        'ห้องคอมพิวเตอร์ — ชั้น 14',
     backgroundImage: 'assets/images/bg_computer_screen.jpg',
+    bgmVolume:       0.65,
     characterImage:  'assets/images/รูปตัวละคร/พระเอก/ท่าสงสัย.png',
     animation:       'bounce',
     text:            'น่าสงสัยมาก... OAT_Admin และ MANA_Dev ล็อกอินจาก IP Address เดียวกันในเวลาใกล้เคียงกัน\n\nแต่เดี๋ยวนะ! พี่มานะลาออกไปเมื่อเดือนที่แล้วนี่ ทำไมบัญชียังใช้งานได้!?',
@@ -71,6 +76,7 @@ const DIALOGUE_NODES = {
     character:       'system',
     location:        'ห้องคอมพิวเตอร์ — ชั้น 14',
     backgroundImage: 'assets/images/bg_computer_screen.jpg',
+    bgmVolume:       0.45,
     characterImage:  null,
     text:            'ในฐานะ Auditor เรามีสิทธิ์เข้าถึงข้อมูลเพื่อการตรวจสอบทุจริต ลองสแกน Inbox ของพี่โอ๊ตดูว่ามีเบาะแสการซื้อขายข้อมูลกับคนนอกหรือไม่',
     choices: [
@@ -84,6 +90,7 @@ const DIALOGUE_NODES = {
     character:       'you',
     location:        'ทางเดิน — ชั้น 14',
     backgroundImage: 'assets/images/bg_office_night.jpg',
+    bgmVolume:       0.75,
     characterImage:  'assets/images/รูปตัวละคร/พระเอก/ท่าสอบสวน.png',
     text:            'ชัดเจนเลย! มีการตกลงราคาฐานข้อมูลลูกค้า VIP จริงๆ เราต้องรีบไปคุยกับพี่โอ๊ตที่ห้องเซิร์ฟเวอร์เพื่อขอคำชี้แจง',
     choices: [
@@ -96,6 +103,7 @@ const DIALOGUE_NODES = {
     character:       'alex',
     location:        'ห้องเซิร์ฟเวอร์ บี — ชั้น 14',
     backgroundImage: 'assets/images/bg_server_room.jpg',
+    bgmVolume:       0.85,
     characterImage:  'assets/images/รูปตัวละคร/โอ๊ดด/ท่าตอแหล.png',
     animation:       'sway',
     text:            'อ้าว กาญจน์ ดึกป่านนี้มีอะไรล่ะ? ระบบมันรวนนิดหน่อยน่ะ พี่กำลังแก้อยู่ ไม่ได้มีใครดึงข้อมูลอะไรหรอก แหม...',
@@ -109,6 +117,7 @@ const DIALOGUE_NODES = {
     character:        'alex',
     location:         'ห้องเซิร์ฟเวอร์ บี — ชั้น 14',
     backgroundImage:  'assets/images/bg_server_room.jpg',
+    bgmVolume:        1.0,
     characterImage:   'assets/images/รูปตัวละคร/โอ๊ดด/ท่าความแตก.png',
     animation:        'shake',
     text:             'หลักฐานอะไร!? อย่ามากล่าวหากันลอยๆ นะน้อง พี่ทำงานที่นี่มา 5 ปี ไม่เคยมีประวัติเสีย ถ้าไม่มีหลักฐานชัดเจน พี่จะฟ้อง HR นะ!',
@@ -125,6 +134,7 @@ const DIALOGUE_NODES = {
     character:       'alex',
     location:        'ห้องเซิร์ฟเวอร์ บี — ชั้น 14',
     backgroundImage: 'assets/images/bg_server_room.jpg',
+    bgmVolume:       0.50,
     characterImage:  'assets/images/รูปตัวละคร/โอ๊ดด/ท่าสารภาพ.png',
     animation:       'slump',
     text:            'พี่... พี่ขอโทษ... ช่วงนี้พี่หมุนเงินไม่ทันจริงๆ พี่แค่กะจะขายข้อมูลชุดเล็กๆ ไม่คิดว่าระบบจะแจ้งเตือน\n\nกาญจน์... พี่ขอร้องล่ะ อย่าเพิ่งรายงานเรื่องนี้ได้ไหม? ถือซะว่าพี่ขอ',
@@ -139,6 +149,7 @@ const DIALOGUE_NODES = {
     character:       'system',
     location:        'ห้องตรวจสอบ — ชั้น 14',
     backgroundImage: 'assets/images/bg_office_desk.jpg',
+    bgmVolume:       0.40,
     characterImage:  null,
     text:            'คุณกลับมาที่โต๊ะทำงานพร้อมหลักฐานครบถ้วน ได้เวลาเขียน Audit Report ส่งผู้บริหารแล้ว\n\nคุณจะระบุเนื้อหาในรายงานอย่างไร?',
     choices: [
@@ -153,6 +164,7 @@ const DIALOGUE_NODES = {
     character:       'system',
     location:        'ผลการตรวจสอบ',
     backgroundImage: 'assets/images/bg_office_desk.jpg',
+    bgmVolume:       0.35,
     characterImage:  null,
     text:            'รายงานผลการตรวจสอบเบื้องต้นถูกส่งตรงถึงผู้บริหารระดับสูงและฝ่ายกฎหมายเรียบร้อยแล้ว\n\nการสืบสวนภายในเริ่มดำเนินการทันทีตามข้อเท็จจริงที่คุณรวบรวมมา...\n\nคดี GHOST-001 ปิดฉากลงอย่างสมบูรณ์!',
     choices: [
@@ -165,6 +177,7 @@ const DIALOGUE_NODES = {
     character:       'system',
     location:        'ผลการตรวจสอบ',
     backgroundImage: 'assets/images/bg_office_desk.jpg',
+    bgmVolume:       0.25,
     characterImage:  null,
     text:            '❌ การสืบสวนล้มเหลว!\n\nหลักฐานของคุณอ่อนเกินไป พี่โอ๊ตหาข้ออ้างปัดตกได้ทั้งหมดและแอบลบ Log ทิ้งในภายหลัง\n\nคุณถูกใบเตือนเรื่องการกล่าวหาพนักงานโดยไม่มีหลักฐานชัดเจน...\n\n( GAME OVER )',
     choices: [
