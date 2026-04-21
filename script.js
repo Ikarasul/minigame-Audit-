@@ -1131,16 +1131,23 @@ function buildLogRows() {
 }
 
 function renderLogTable(rows) {
-  const tbody = document.querySelector('#log-table tbody');
-  tbody.innerHTML = '';
+  const container = document.getElementById('term-rows');
+  if (!container) return;
+  container.innerHTML = '';
   rows.forEach(r => {
-    const tr = document.createElement('tr');
-    tr.dataset.user = r.user;
-    tr.dataset.ip   = r.ip;
-    tr.innerHTML = `<td>${r.time}</td><td>${r.user}</td><td>${r.ip}</td><td>${r.action}</td>`;
-    tbody.appendChild(tr);
+    const div = document.createElement('div');
+    div.className = 'term-row';
+    div.dataset.user = r.user;
+    div.dataset.ip   = r.ip;
+    div.innerHTML =
+      `<span class="col col-mark">[ ]</span>` +
+      `<span class="col col-time">${r.time}</span>` +
+      `<span class="col col-user">${r.user}</span>` +
+      `<span class="col col-ip">${r.ip}</span>` +
+      `<span class="col col-action">${r.action}</span>`;
+    container.appendChild(div);
   });
-  logRowEls = Array.from(tbody.querySelectorAll('tr'));
+  logRowEls = Array.from(container.querySelectorAll('.term-row'));
   attachLogRowHandlers();
 }
 
@@ -1158,23 +1165,26 @@ function attachLogRowHandlers() {
     });
     row.addEventListener('click', () => {
       const user = row.dataset.user;
+      const mark = row.querySelector('.col-mark');
       const idx = selectedLogRows.indexOf(user);
       if (idx > -1) {
         selectedLogRows.splice(idx, 1);
         row.classList.remove('selected');
+        if (mark) mark.textContent = '[ ]';
       } else {
         if (selectedLogRows.length >= 2) {
-          setLogFeedback('เลือกได้แค่ 2 แถวเท่านั้น ยกเลิกแถวก่อนหน้าก่อน', 'hint');
+          setLogFeedback('> ERROR: เลือกได้แค่ 2 rows — unmark row ก่อน', 'hint');
           return;
         }
         selectedLogRows.push(user);
         row.classList.add('selected');
+        if (mark) mark.textContent = '[X]';
         if (!CORRECT_PAIR.includes(user)) {
           row.classList.add('wrong-pick');
           setTimeout(() => row.classList.remove('wrong-pick'), 400);
-          setLogFeedback('แถวนี้ IP ไม่ซ้ำกับใครในตาราง ลองดูคอลัมน์ IP Address อีกที', 'bad');
+          setLogFeedback('> WARN: IP ของ row นี้ไม่ซ้ำกับ row อื่น', 'bad');
         } else {
-          setLogFeedback('น่าสนใจ... แถวนี้มีอะไรบางอย่าง 🔎', 'good');
+          setLogFeedback('> MATCH: row นี้มี IP ซ้ำกับ row อื่น 🔎', 'good');
         }
       }
       updateSuspicion();
@@ -1206,9 +1216,9 @@ if (btnLogHint) {
     logHintsLeft--;
     document.getElementById('hint-count').textContent = `(${logHintsLeft})`;
     if (logHintsLeft === 1) {
-      setLogFeedback('💡 คำใบ้: เรียงจาก IP Address — หา IP ที่ปรากฏ 2 ครั้งจากคนละ User', 'hint');
+      setLogFeedback('> HINT: group by IP — หา IP ที่ปรากฏ 2 ครั้งจากคนละ user', 'hint');
     } else {
-      setLogFeedback(`💡 คำใบ้: IP ${currentSharedIp} คือ IP ที่ถูกใช้ซ้ำ`, 'hint');
+      setLogFeedback(`> HINT: suspicious IP = ${currentSharedIp}`, 'hint');
       btnLogHint.disabled = true;
     }
   });

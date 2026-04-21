@@ -2141,7 +2141,171 @@ html, body {
 }
 .mg-btn-ghost:disabled { opacity: 0.35; cursor: not-allowed; }
 
-/* ── Log Mini-game ────────────────────────────────────────── */
+/* ── CMD Terminal (Log Mini-game) ─────────────────────────── */
+.modal-panel.terminal-panel {
+  max-width: 780px;
+  width: 92vw;
+  background: #0a0e14;
+  border: 1px solid #1e2a3a;
+  border-radius: 6px;
+  padding: 0;
+  box-shadow: 0 0 0 1px #000, 0 20px 60px rgba(0,0,0,0.8), 0 0 80px rgba(0,255,140,0.08);
+  overflow: hidden;
+  font-family: 'Consolas', 'Menlo', 'Courier New', monospace;
+}
+
+.terminal-titlebar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: linear-gradient(180deg, #2a2a2a, #1a1a1a);
+  border-bottom: 1px solid #000;
+  color: #d4d4d4;
+  font-size: 0.82rem;
+  user-select: none;
+}
+.term-title-icon { color: #4ade80; font-size: 0.7rem; }
+.terminal-title {
+  flex: 1;
+  font-family: 'Consolas', 'Menlo', monospace;
+  letter-spacing: 0.3px;
+}
+.term-window-btns { display: flex; gap: 0; align-items: stretch; }
+.term-win-btn, .term-win-close {
+  width: 36px; height: 24px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: transparent; color: #d4d4d4;
+  border: none; font-family: inherit; font-size: 0.85rem;
+  cursor: default;
+}
+.term-win-btn:hover { background: #3a3a3a; }
+.term-win-close:hover { background: #c42b1c; color: #fff; }
+
+.terminal-body {
+  background: #0a0e14;
+  color: #9ae66e;
+  padding: 16px 18px 18px;
+  font-family: 'Consolas', 'Menlo', 'Courier New', monospace;
+  font-size: 0.92rem;
+  line-height: 1.55;
+  max-height: 78vh;
+  overflow-y: auto;
+  text-shadow: 0 0 6px rgba(154, 230, 110, 0.18);
+}
+.terminal-body::-webkit-scrollbar { width: 10px; }
+.terminal-body::-webkit-scrollbar-track { background: #0a0e14; }
+.terminal-body::-webkit-scrollbar-thumb { background: #1e2a3a; }
+
+.term-line { white-space: pre-wrap; }
+.term-prompt { color: #4ade80; font-weight: 700; }
+.term-cmd { color: #e2e8f0; }
+.term-dim { color: #64748b; text-shadow: none; }
+
+.term-table {
+  border: 1px dashed #1e3a2a;
+  padding: 6px 8px;
+  margin: 4px 0 2px;
+  background: rgba(16, 24, 16, 0.5);
+}
+.term-head, .term-row {
+  display: grid;
+  grid-template-columns: 36px 90px 140px 160px 1fr;
+  gap: 8px;
+  align-items: center;
+  padding: 3px 4px;
+}
+.term-head {
+  color: #38bdf8;
+  font-weight: 700;
+  border-bottom: 1px solid #1e3a2a;
+  margin-bottom: 4px;
+  padding-bottom: 5px;
+}
+.term-row {
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+  border-left: 3px solid transparent;
+}
+.term-row:hover { background: rgba(74, 222, 128, 0.08); color: #d4f0b8; }
+.term-row.ip-match {
+  background: rgba(239, 68, 68, 0.12);
+  color: #fca5a5;
+  border-left-color: #ef4444;
+}
+.term-row.selected {
+  background: rgba(74, 222, 128, 0.18);
+  color: #86efac;
+  border-left-color: #4ade80;
+  box-shadow: inset 0 0 0 1px rgba(74,222,128,0.35);
+}
+.term-row.wrong-pick { animation: term-shake 0.4s ease; background: rgba(239,68,68,0.25) !important; }
+@keyframes term-shake {
+  0%,100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+.term-row .col-mark { color: #4ade80; font-weight: 700; text-align: center; }
+.term-row .col { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.term-meter { display: flex; align-items: center; gap: 10px; margin: 6px 0 2px; }
+.term-meter .suspicion-track {
+  flex: 1; height: 10px;
+  background: #0e1418;
+  border: 1px solid #1e3a2a;
+  overflow: hidden;
+}
+.term-meter #suspicion-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4ade80, #fbbf24, #ef4444);
+  transition: width 0.3s ease;
+}
+
+.term-feedback {
+  min-height: 22px;
+  margin-top: 10px;
+  font-size: 0.88rem;
+  opacity: 0;
+  transition: opacity 0.25s;
+  color: #94a3b8;
+}
+.term-feedback.show { opacity: 1; }
+.term-feedback.good { color: #4ade80; }
+.term-feedback.bad  { color: #ef4444; }
+.term-feedback.hint { color: #fbbf24; }
+
+.term-footer {
+  display: flex; justify-content: space-between;
+  gap: 10px; margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px dashed #1e3a2a;
+}
+.term-btn {
+  background: transparent;
+  color: #9ae66e;
+  border: 1px solid #1e3a2a;
+  padding: 8px 16px;
+  font-family: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-shadow: inherit;
+}
+.term-btn:hover:not(:disabled) {
+  background: rgba(74, 222, 128, 0.12);
+  border-color: #4ade80;
+  color: #d4f0b8;
+  box-shadow: 0 0 12px rgba(74,222,128,0.25);
+}
+.term-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.term-btn-primary { color: #4ade80; border-color: #4ade80; font-weight: 700; }
+.term-btn-primary:not(:disabled) { animation: term-btn-pulse 1.6s ease-in-out infinite; }
+@keyframes term-btn-pulse {
+  0%,100% { box-shadow: 0 0 4px rgba(74,222,128,0.3); }
+  50%     { box-shadow: 0 0 16px rgba(74,222,128,0.55); }
+}
+
+/* ── Log Mini-game (legacy table — kept for compat) ───────── */
 .data-table tbody tr.ip-match {
   background: rgba(239, 68, 68, 0.10);
   box-shadow: inset 3px 0 0 rgba(239,68,68,0.6);

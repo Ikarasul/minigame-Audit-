@@ -223,50 +223,52 @@
     </div>
   </div>
 
-  <!-- ===== LOG MINIGAME MODAL ===== -->
+  <!-- ===== LOG MINIGAME MODAL — CMD style ===== -->
   <div id="log-minigame-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="log-title">
     <div class="modal-backdrop"></div>
-    <div class="modal-panel" style="max-width: 760px;">
-      <header class="modal-header">
-        <h2 id="log-title">&#128269; ฐานข้อมูล Access Log</h2>
-        <button class="modal-close" id="close-log-minigame" aria-label="ปิด" style="visibility:hidden;">&times;</button>
-      </header>
-      <div class="modal-body">
-        <div class="mg-brief">
-          <p><span class="mg-label">ภารกิจ:</span> หา <b>คู่ล็อกอินที่มาจาก IP เดียวกัน</b> แต่ <b>ต่าง User</b> — นั่นคือรอยรั่ว</p>
+    <div class="modal-panel terminal-panel">
+      <div class="terminal-titlebar">
+        <span class="term-title-icon">&#9632;</span>
+        <span class="terminal-title" id="log-title">C:\AUDIT\access_log.exe</span>
+        <div class="term-window-btns">
+          <span class="term-win-btn">_</span>
+          <span class="term-win-btn">&#9633;</span>
+          <button class="modal-close term-win-close" id="close-log-minigame" aria-label="ปิด" style="visibility:hidden;">&times;</button>
         </div>
+      </div>
+      <div class="terminal-body">
+        <div class="term-line">Microsoft Audit Shell [Version 10.0.22621.1]</div>
+        <div class="term-line">(c) Quantum FinTech Internal Audit. All rights reserved.</div>
+        <div class="term-line">&nbsp;</div>
+        <div class="term-line"><span class="term-prompt">C:\AUDIT&gt;</span> <span class="term-cmd">query access_log --date today --filter suspicious</span></div>
+        <div class="term-line term-dim">[*] connecting to SIEM archive...</div>
+        <div class="term-line term-dim">[*] mission: หา 2 rows ที่ IP ซ้ำกัน แต่ User ต่างกัน</div>
+        <div class="term-line term-dim">[*] click แถวเพื่อ mark — เลือกได้สูงสุด 2 แถว</div>
+        <div class="term-line">&nbsp;</div>
 
-        <div class="suspicion-meter">
-          <div class="suspicion-header">
-            <span>ระดับความน่าสงสัย</span>
-            <span id="suspicion-value">0%</span>
+        <div class="term-table">
+          <div class="term-head">
+            <span class="col col-mark"></span>
+            <span class="col col-time">TIME</span>
+            <span class="col col-user">USER_ID</span>
+            <span class="col col-ip">IP_ADDRESS</span>
+            <span class="col col-action">ACTION</span>
           </div>
-          <div class="suspicion-track"><div id="suspicion-fill"></div></div>
+          <div class="term-rows" id="term-rows"></div>
         </div>
 
-        <table id="log-table" class="data-table">
-          <thead>
-            <tr>
-              <th>Time</th>
-              <th>User ID</th>
-              <th>IP Address</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr data-user="NUN_Senior" data-ip="192.168.1.50"><td>02:05:11</td><td>NUN_Senior</td><td>192.168.1.50</td><td>VIEW_REPORT</td></tr>
-            <tr data-user="SYS_Cron"   data-ip="localhost"><td>02:10:00</td><td>SYS_Cron</td><td>localhost</td><td>BACKUP_DB</td></tr>
-            <tr data-user="OAT_Admin"  data-ip="192.168.1.105"><td>02:14:22</td><td>OAT_Admin</td><td>192.168.1.105</td><td>PULL_DATA</td></tr>
-            <tr data-user="ALICE_Dev"  data-ip="10.0.0.44"><td>02:15:05</td><td>ALICE_Dev</td><td>10.0.0.44</td><td>READ_API</td></tr>
-            <tr data-user="MANA_Dev"   data-ip="192.168.1.105"><td>02:17:40</td><td>MANA_Dev</td><td>192.168.1.105</td><td>PULL_DATA</td></tr>
-          </tbody>
-        </table>
+        <div class="term-line">&nbsp;</div>
+        <div class="term-meter">
+          <span class="term-prompt">[suspicion]</span>
+          <div class="suspicion-track"><div id="suspicion-fill"></div></div>
+          <span id="suspicion-value" class="term-cmd">0%</span>
+        </div>
 
-        <div id="log-feedback" class="mg-feedback"></div>
+        <div id="log-feedback" class="term-feedback"></div>
 
-        <div class="mg-footer">
-          <button id="btn-log-hint" class="mg-btn-ghost">💡 ขอคำใบ้ <span id="hint-count">(2)</span></button>
-          <button id="btn-confirm-log" class="mg-btn-primary" disabled>🔒 ยืนยันตรวจสอบ</button>
+        <div class="term-footer">
+          <button id="btn-log-hint" class="term-btn">[?] hint <span id="hint-count">(2)</span></button>
+          <button id="btn-confirm-log" class="term-btn term-btn-primary" disabled>[enter] confirm &gt;</button>
         </div>
       </div>
     </div>
