@@ -1302,7 +1302,7 @@ function judgeEmail(key, flagged) {
         flagged: true,
       });
       closeModal(els.emailModal);
-      goTo('chapter3_1');
+      goTo('chapter2_review');
     }, 'success');
   } else if (flagged && !e.suspect) {
     state.flags.wrongEmailFlags = (state.flags.wrongEmailFlags || 0) + 1;
@@ -1354,34 +1354,76 @@ const AUDIT_PRINCIPLES = [
 ];
 
 function evaluatePrinciples(ctx) {
-  const { ethics, quizScore, collectedCount, finalChoice, wrongEmailFlags } = ctx;
+  const {
+    ethics, quizScore, collectedCount,
+    finalChoice, wrongEmailFlags,
+    authorizedAccess, confrontWith, mercyResponse,
+  } = ctx;
   const r = {};
 
-  if (ethics >= 70)      r.integrity = { status: 'pass', comment: 'รักษาความซื่อสัตย์ได้ดีตลอดคดี' };
-  else if (ethics >= 40) r.integrity = { status: 'warn', comment: 'บางจังหวะกระทบความซื่อสัตย์ ควรระวังให้มากขึ้น' };
-  else                   r.integrity = { status: 'fail', comment: 'การตัดสินใจหลายครั้งไม่สอดคล้องกับหลักซื่อสัตย์' };
+  // ── Integrity ── (hit hardest by soft mercy response)
+  if (mercyResponse === 'soft')
+    r.integrity = { status: 'fail', comment: 'ปิดเรื่องให้ผู้กระทำผิด — ละเมิดความซื่อสัตย์โดยตรง' };
+  else if (ethics >= 70)
+    r.integrity = { status: 'pass', comment: 'รักษาความซื่อสัตย์ได้ดีตลอดคดี' };
+  else if (ethics >= 40)
+    r.integrity = { status: 'warn', comment: 'บางจังหวะกระทบความซื่อสัตย์ ควรระวังให้มากขึ้น' };
+  else
+    r.integrity = { status: 'fail', comment: 'การตัดสินใจหลายครั้งไม่สอดคล้องกับหลักซื่อสัตย์' };
 
-  if (finalChoice === 'facts')       r.fair_presentation = { status: 'pass', comment: 'รายงานข้อเท็จจริงโดยไม่ชี้ตัว — ถูกต้องตามหลัก' };
-  else if (finalChoice === 'accuse') r.fair_presentation = { status: 'fail', comment: 'ชี้ตัวผู้กระทำผิดในรายงาน — เป็นหน้าที่ฝ่ายสอบสวน/กฎหมาย' };
-  else                               r.fair_presentation = { status: 'warn', comment: 'ยังไม่มีข้อมูลในการตัดสิน' };
+  // ── Fair Presentation ──
+  if (mercyResponse === 'soft')
+    r.fair_presentation = { status: 'fail', comment: 'ปิดข้อเท็จจริง — หลัก Fair Presentation คือรายงานทุกสิ่งที่พบ' };
+  else if (finalChoice === 'facts')
+    r.fair_presentation = { status: 'pass', comment: 'รายงานข้อเท็จจริงโดยไม่ชี้ตัว — ถูกต้องตามหลัก' };
+  else if (finalChoice === 'accuse')
+    r.fair_presentation = { status: 'fail', comment: 'ชี้ตัวผู้กระทำผิดในรายงาน — เป็นหน้าที่ฝ่ายสอบสวน/กฎหมาย' };
+  else
+    r.fair_presentation = { status: 'warn', comment: 'ยังไม่มีข้อมูลในการตัดสิน' };
 
-  if (ethics >= 50 && wrongEmailFlags === 0)
+  // ── Due Professional Care ──
+  if (ethics >= 50 && wrongEmailFlags === 0 && mercyResponse !== 'soft')
     r.due_care = { status: 'pass', comment: 'ใช้ดุลยพินิจรอบคอบ ไม่ผิดพลาดในการประเมิน' };
   else if (wrongEmailFlags > 0)
     r.due_care = { status: 'warn', comment: `ชี้อีเมลปกติว่าน่าสงสัย ${wrongEmailFlags} ครั้ง — ควรอ่านเนื้อหาให้ละเอียดก่อนสรุป` };
   else
     r.due_care = { status: 'warn', comment: 'ควรพิจารณาให้รอบคอบกว่านี้' };
 
-  r.confidentiality = { status: 'pass', comment: 'ใช้สิทธิ์เข้าถึงข้อมูลเพื่อการตรวจสอบเท่านั้น' };
-  r.independence    = { status: 'pass', comment: 'ไม่มีผลประโยชน์ทับซ้อนกับผู้ถูกตรวจสอบ' };
+  // ── Confidentiality ── (authorization matters)
+  if (authorizedAccess === true)
+    r.confidentiality = { status: 'pass', comment: 'ขอ authorization จาก CISO ก่อนเข้าถึง inbox — ถูกกระบวนการ' };
+  else if (authorizedAccess === false)
+    r.confidentiality = { status: 'warn', comment: 'เข้า inbox โดยไม่รอ authorization — เข้าใจได้เชิงเวลา แต่เสี่ยงต่อข้อโต้แย้งทางกฎหมาย' };
+  else
+    r.confidentiality = { status: 'pass', comment: 'ใช้สิทธิ์เข้าถึงข้อมูลเพื่อการตรวจสอบเท่านั้น' };
 
-  if (collectedCount >= 3)      r.evidence_based = { status: 'pass', comment: `เก็บหลักฐาน ${collectedCount} ชิ้นครบ ใช้ยืนยันข้อสรุปได้` };
-  else if (collectedCount >= 2) r.evidence_based = { status: 'warn', comment: 'เก็บหลักฐานได้บางส่วน ยังไม่ครอบคลุมทั้งคดี' };
-  else                          r.evidence_based = { status: 'fail', comment: 'หลักฐานไม่เพียงพอสำหรับข้อสรุป' };
+  // ── Independence ── (team vs solo confrontation)
+  if (confrontWith === 'team')
+    r.independence = { status: 'pass', comment: 'เผชิญหน้าพร้อม senior auditor — มีพยาน ถูกหลัก ISO 19011' };
+  else if (confrontWith === 'solo' && mercyResponse === 'soft')
+    r.independence = { status: 'fail', comment: 'ไปคุยคนเดียวและตัดสินใจปิดเรื่อง — เสี่ยง conflict of interest' };
+  else if (confrontWith === 'solo')
+    r.independence = { status: 'warn', comment: 'ไปคุยคนเดียว — ขาดพยาน ถ้ามีข้อโต้แย้งจะพิสูจน์ยาก' };
+  else
+    r.independence = { status: 'pass', comment: 'ไม่มีผลประโยชน์ทับซ้อนกับผู้ถูกตรวจสอบ' };
 
-  if (quizScore >= 50 && ethics >= 50) r.risk_based = { status: 'pass', comment: 'วิเคราะห์ความเสี่ยงหลัก (Shared Account + Terminated User) ได้ถูกต้อง' };
-  else if (quizScore >= 50)             r.risk_based = { status: 'warn', comment: 'ระบุความเสี่ยงได้ แต่การตัดสินใจไม่สมดุลกับระดับความเสี่ยง' };
-  else                                  r.risk_based = { status: 'fail', comment: 'ยังระบุความเสี่ยงหลักของคดีนี้ไม่ถูกต้อง' };
+  // ── Evidence-based ──
+  if (mercyResponse === 'soft')
+    r.evidence_based = { status: 'fail', comment: 'มีหลักฐานแต่เลือกไม่ใช้ — Evidence-based ต้อง "ยึด" ไม่ใช่ "เลือก" หลักฐาน' };
+  else if (collectedCount >= 3)
+    r.evidence_based = { status: 'pass', comment: `เก็บหลักฐาน ${collectedCount} ชิ้นครบ ใช้ยืนยันข้อสรุปได้` };
+  else if (collectedCount >= 2)
+    r.evidence_based = { status: 'warn', comment: 'เก็บหลักฐานได้บางส่วน ยังไม่ครอบคลุมทั้งคดี' };
+  else
+    r.evidence_based = { status: 'fail', comment: 'หลักฐานไม่เพียงพอสำหรับข้อสรุป' };
+
+  // ── Risk-based ──
+  if (quizScore >= 50 && ethics >= 50)
+    r.risk_based = { status: 'pass', comment: 'วิเคราะห์ความเสี่ยงหลัก (Shared Account + Terminated User) ได้ถูกต้อง' };
+  else if (quizScore >= 50)
+    r.risk_based = { status: 'warn', comment: 'ระบุความเสี่ยงได้ แต่การตัดสินใจไม่สมดุลกับระดับความเสี่ยง' };
+  else
+    r.risk_based = { status: 'fail', comment: 'ยังระบุความเสี่ยงหลักของคดีนี้ไม่ถูกต้อง' };
 
   return r;
 }
@@ -1415,13 +1457,31 @@ function getAuditVerdict(totalScore) {
 
 function getRecommendations(ctx) {
   const recs = [];
+  if (ctx.mercyResponse === 'soft') {
+    recs.push({ priority: 'high',
+      title: '🚨 ปิดเรื่องทุจริตเพื่อช่วยเพื่อน = ละเมิดจรรยาบรรณหนักสุด',
+      body: 'แม้ผู้ทุจริตจะมีเหตุผลส่วนตัวที่น่าเห็นใจ (แม่ป่วย, หนี้สิน) หน้าที่ของ IT Auditor คือการ "รายงานข้อเท็จจริงทั้งหมด" ฝ่าย HR/กฎหมาย มีกระบวนการพิจารณาปัจจัยบรรเทาโทษอยู่แล้ว — Auditor ไม่ใช่ผู้ตัดสิน',
+    });
+  }
   if (ctx.finalChoice === 'accuse') {
     recs.push({ priority: 'high',
       title: '🚫 หลีกเลี่ยงการชี้ตัวผู้กระทำผิดในรายงานตรวจสอบ',
       body: 'หน้าที่ของ IT Auditor คือนำเสนอ "ข้อเท็จจริงและหลักฐาน" ปล่อยให้ฝ่ายสอบสวน/กฎหมาย/HR เป็นผู้ตัดสิน — ตามหลัก Fair Presentation',
     });
   }
-  if (ctx.ethics < 50) {
+  if (ctx.confrontWith === 'solo') {
+    recs.push({ priority: 'medium',
+      title: '👥 Interview ผู้ถูกตรวจสอบ ควรมีผู้ตรวจสอบอย่างน้อย 2 คน',
+      body: 'หลัก Independence (ISO 19011) บอกว่าการ interview ต้องมีพยาน ป้องกันข้อโต้แย้งเรื่อง "คุณขู่ผม" หรือ "คุณบิดเบือนคำพูดผม" ในภายหลัง',
+    });
+  }
+  if (ctx.authorizedAccess === false) {
+    recs.push({ priority: 'medium',
+      title: '🔐 ขอ authorization ก่อนเข้าถึงข้อมูลส่วนบุคคลของพนักงาน',
+      body: 'แม้ในสถานการณ์ฉุกเฉิน การเข้าถึง inbox โดยไม่มี formal approval อาจทำให้หลักฐานถูกยกฟ้องในภายหลัง (fruit of the poisonous tree) — หลัก Confidentiality',
+    });
+  }
+  if (ctx.ethics < 50 && ctx.mercyResponse !== 'soft') {
     recs.push({ priority: 'high',
       title: '⚖ ทบทวนหลัก Integrity — รากฐานของวิชาชีพ',
       body: 'การตัดสินใจที่กระทบจริยธรรมแม้เพียงเล็กน้อย ก็บั่นทอนความน่าเชื่อถือของรายงานทั้งฉบับ',
@@ -1462,9 +1522,12 @@ function showFinalScore() {
 
   const ctx = {
     ethics, quizScore,
-    finalChoice:     state.flags.finalChoice,
-    collectedCount:  state.collectedEvidence.length,
-    wrongEmailFlags: state.flags.wrongEmailFlags || 0,
+    finalChoice:      state.flags.finalChoice,
+    collectedCount:   state.collectedEvidence.length,
+    wrongEmailFlags:  state.flags.wrongEmailFlags || 0,
+    authorizedAccess: state.flags.authorizedAccess,
+    confrontWith:     state.flags.confrontWith,
+    mercyResponse:    state.flags.mercyResponse,
   };
 
   const verdict      = getAuditVerdict(totalScore);
