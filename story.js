@@ -83,9 +83,18 @@ const DIALOGUE_NODES = {
     bgmMood:         'sneak',
     characterImage:  'assets/images/รูปตัวละคร/พี่นุ้น/ท่าขอร้อง.png',
     text:            'เดี๋ยวก่อนกาญจน์ — การเข้า inbox ของพนักงาน แม้จะเพื่อตรวจสอบทุจริต ก็ต้องมีขั้นตอน\n\n[ ISO 19011 — Confidentiality: ข้อมูลที่ได้มาระหว่างการตรวจสอบต้องได้รับการอนุญาตและเก็บรักษาอย่างเหมาะสม ]\n\nฉันขอ authorization ด่วนจาก CISO ได้ แต่ใช้เวลาประมาณ 30 นาที...หรือถ้าไม่รอก็ได้ เวลา exfiltration ยังดำเนินอยู่ — เลือกเองนะ',
+    hint:            'รอ authorization = ถูกหลัก Confidentiality (+ethics). ลุยเลย = เร็วจริง แต่หลักฐานอาจใช้ทางกฎหมายไม่ได้ และกระทบ Integrity (−ethics).',
     choices: [
       { text: '⏳ รอ authorization ก่อน (ช้าแต่ถูกต้อง)', next: 'chapter2_authorized' },
-      { text: '⚡ ลุยเลย — ถ้าช้า log อาจโดนลบก่อน', next: 'chapter2_2' },
+      {
+        text: '⚡ ลุยเลย — ถ้าช้า log อาจโดนลบก่อน',
+        next: 'chapter2_2',
+        onSelect: () => {
+          state.flags.authorizedAccess = false;
+          state.flags.unauthorizedAccess = true;
+          adjustEthics(-10);
+        },
+      },
     ],
   },
 
@@ -128,6 +137,7 @@ const DIALOGUE_NODES = {
     bgmMood:         'confront',
     characterImage:  'assets/images/รูปตัวละคร/พี่นุ้น/พี่นุ่น.png',
     text:            'หลักฐานแน่นแล้ว ก่อนที่จะไปเผชิญหน้ากับพี่โอ๊ต — อยากให้ฉันไปด้วยเป็นพยานไหม?\n\n[ ISO 19011 — Independence: การ interview ผู้ถูกตรวจสอบ ควรมีผู้ตรวจสอบอย่างน้อย 2 คน เพื่อป้องกันข้อโต้แย้งภายหลัง ]\n\nแต่ถ้ากาญจน์อยากคุยส่วนตัวก่อน ก็เข้าใจได้ พี่โอ๊ตเป็นรุ่นพี่ที่สนิทกัน',
+    hint:            'ไปด้วยกัน = ถูกหลัก Independence มีพยานยืนยัน (+ethics). ไปคนเดียว = เสี่ยงถูกกล่าวหา bias หรือข้อโต้แย้งในภายหลัง',
     choices: [
       {
         text: '👥 ไปด้วยกัน (มีพยาน — ถูกต้องตามหลัก Independence)',
@@ -137,7 +147,7 @@ const DIALOGUE_NODES = {
       {
         text: '🚶 ไปคนเดียว (อยากให้โอกาสพี่โอ๊ตอธิบาย)',
         next: 'chapter3_1',
-        onSelect: () => { state.flags.confrontWith = 'solo'; },
+        onSelect: () => { state.flags.confrontWith = 'solo'; adjustEthics(-5); },
       },
     ],
   },
@@ -179,7 +189,9 @@ const DIALOGUE_NODES = {
     characterImage:   'assets/images/รูปตัวละคร/โอ๊ดด/ท่าความแตก.png',
     animation:        'shake',
     text:             'หลักฐานอะไร!? อย่ามากล่าวหากันลอยๆ นะน้อง พี่ทำงานที่นี่มา 5 ปี ไม่เคยมีประวัติเสีย ถ้าไม่มีหลักฐานชัดเจน พี่จะฟ้อง HR นะ!',
+    hint:             'ยื่นเฉพาะหลักฐานที่ "เชื่อมโยงพี่โอ๊ตกับการกระทำโดยตรง" เช่น การติดต่อกับคนนอก ไม่ใช่แค่ช่องโหว่ระบบ (Access Log แสดงแค่การ login, HR แสดงช่องโหว่ process)',
     requiredEvidence: 'อีเมลตกลงซื้อขายข้อมูล VIP',
+    evidenceHint:     'Access Log และช่องโหว่ HR แสดงเพียง "โอกาส" ในการกระทำผิด พี่โอ๊ตปฏิเสธได้ว่าอาจเป็นคนอื่น — หาหลักฐานที่ระบุตัว + เจตนา',
     successScene:     'chapter3_4',
     failScene:        'bad_end',
     choices: [
@@ -280,6 +292,7 @@ const DIALOGUE_NODES = {
     bgmMood:         'reflection',
     characterImage:  null,
     text:            'คุณกลับมาที่โต๊ะทำงานพร้อมหลักฐานครบถ้วน ได้เวลาเขียน Audit Report ส่งผู้บริหารแล้ว\n\nคุณจะระบุเนื้อหาในรายงานอย่างไร?',
+    hint:            'Auditor ไม่ใช่ศาล (Fair Presentation) — รายงานข้อเท็จจริงและหลักฐานเท่านั้น ส่วนการลงโทษเป็นของ HR/Legal. ระบุชื่อผู้ต้องหาโดยตรงมักเกินขอบเขต',
     choices: [
       { text: "📝 ระบุชื่อในรายงานชัดเจนว่า 'พี่โอ๊ต' เป็นผู้ขโมยข้อมูล", action: 'accusePerson' },
       { text: '📊 รายงานเฉพาะข้อเท็จจริง: พบการใช้ IP ซ้ำซ้อนและอีเมลน่าสงสัย', action: 'reportFacts' },

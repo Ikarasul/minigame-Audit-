@@ -26,6 +26,7 @@ const els = {
   locationText:     document.getElementById('location-text'),
   // Evidence modal
   btnEvidence:       document.getElementById('btn-evidence'),
+  btnHint:           document.getElementById('btn-hint'),
   evidenceModal:     document.getElementById('evidence-modal'),
   closeEvidence:     document.getElementById('close-evidence'),
   evidenceList:      document.getElementById('evidence-list'),
@@ -113,16 +114,13 @@ function loadGame() {
     state.currentScene      = save.currentScene      ?? 'start';
     state.ethicsMeter       = save.ethicsMeter       ?? 50;
     state.collectedEvidence = save.collectedEvidence ?? [];
+    state.evidenceItems     = save.evidenceItems     ?? [];
     state.flags             = save.flags             ?? {};
-
-    // Re-hydrate evidenceItems from IDs in story data
-    // (evidenceItems are rebuilt on-demand when evidence is re-collected)
-    // For a proper load we just clear auditLog and note the load event
-    state.auditLog     = [];
-    state.evidenceItems = [];
+    state.auditLog          = [];
 
     injectEthicsMeter();
     updateMuteBtn();
+    renderEvidence();
     addAuditEntry(`เกมโหลด — ฉาก: ${state.currentScene}`, 'ok');
     goTo(state.currentScene);
     return true;
@@ -688,6 +686,7 @@ function renderScene(sceneId) {
 
   hideMainMenu();
   state.currentScene = sceneId;
+  updateHintButton(sceneData);
 
   const dialogueTextEl = document.getElementById('dialogue-text');
   const choicesContainerEl = document.getElementById('choices-container');
@@ -770,6 +769,7 @@ function renderChoices(choices) {
         expectedEvidence  = node.requiredEvidence || '';
         successSceneId    = node.successScene    || '';
         failSceneId_ev    = node.failScene       || '';
+        state.flags.wrongEvidenceAttempts = 0;
         renderEvidence(); // rebuild cards with click listeners
         els.evidenceModal.classList.remove('hidden');
         if (els.presentEvidenceBtn) {
@@ -917,6 +917,25 @@ els.btnMute.addEventListener('click', () => {
 });
 
 els.btnEvidence.addEventListener('click', () => openModal(els.evidenceModal));
+
+function updateHintButton(sceneData) {
+  if (!els.btnHint) return;
+  const hasHint = !!(sceneData && sceneData.hint);
+  els.btnHint.classList.toggle('hint-available', hasHint);
+  els.btnHint.disabled = false;
+}
+
+if (els.btnHint) {
+  els.btnHint.addEventListener('click', () => {
+    const node = DIALOGUE_NODES[state.currentScene] || {};
+    const hint = node.hint;
+    if (!hint) {
+      showGameAlert('💡 คำใบ้', 'ฉากนี้ยังไม่มีคำใบ้พิเศษ — อ่านบทสนทนาและหลักฐานที่มีให้ดีก่อนตัดสินใจ', null, 'info');
+      return;
+    }
+    showGameAlert('💡 คำใบ้สำหรับฉากนี้', hint, null, 'info');
+  });
+}
 els.closeEvidence.addEventListener('click', () => {
   closeModal(els.evidenceModal);
   // Leave presentation mode when the player dismisses without presenting
@@ -932,19 +951,43 @@ els.closeEvidence.addEventListener('click', () => {
 if (els.presentEvidenceBtn) {
   els.presentEvidenceBtn.addEventListener('click', () => {
     if (selectedEvidenceItem === expectedEvidence) {
+      state.flags.wrongEvidenceAttempts = 0;
       showGameAlert('หลักฐานมัดตัว!', 'นี่แหละคือหลักฐานที่ปฏิเสธไม่ได้!', () => {
         closeModal(els.evidenceModal);
         isPresentingMode = false;
         els.presentEvidenceBtn.classList.add('hidden');
         goTo(successSceneId);
       });
-    } else {
-      showGameAlert('หลักฐานอ่อนเกินไป!', 'หลักฐานชิ้นนี้ไม่เกี่ยวข้องกัน ลองคิดดูดีๆ', () => {
+      return;
+    }
+
+    const attempts = (state.flags.wrongEvidenceAttempts || 0) + 1;
+    state.flags.wrongEvidenceAttempts = attempts;
+    adjustEthics(-3);
+
+    const node = DIALOGUE_NODES[state.currentScene] || {};
+    const defaultHint = 'คิดใหม่: หลักฐานที่ดีต้อง "เชื่อมโยงพี่โอ๊ตกับการกระทำโดยตรง" ไม่ใช่แค่ช่องโหว่ระบบ';
+    const hint = node.evidenceHint || defaultHint;
+
+    if (attempts >= 3) {
+      showGameAlert('หลักฐานไม่เพียงพอ — Insufficient Audit Evidence',
+        'คุณยื่นหลักฐานผิดถึง 3 ครั้ง พี่โอ๊ตเริ่มได้ใจและปฏิเสธทุกข้อกล่าวหา รายงานของคุณถูกตีกลับ', () => {
         closeModal(els.evidenceModal);
         isPresentingMode = false;
         els.presentEvidenceBtn.classList.add('hidden');
         goTo(failSceneId_ev);
       });
+    } else {
+      showGameAlert(
+        `หลักฐานอ่อนเกินไป! (ครั้งที่ ${attempts}/3)`,
+        `หลักฐานชิ้นนี้ยังไม่มัดตัวพอ\n\n💡 คำใบ้: ${hint}\n\n(−3 ความซื่อสัตย์ เพราะกล่าวหาโดยยังไม่แน่น — ลองเลือกใหม่)`,
+        () => {
+          // keep modal open, let user re-select
+          selectedEvidenceItem = null;
+          document.querySelectorAll('#evidence-list .evidence-item').forEach(c => c.classList.remove('selected-evidence'));
+          els.presentEvidenceBtn.disabled = true;
+        }
+      );
     }
   });
 }
@@ -959,6 +1002,7 @@ els.btnSave.addEventListener('click', () => {
       currentScene:      state.currentScene,
       ethicsMeter:       state.ethicsMeter,
       collectedEvidence: state.collectedEvidence,
+      evidenceItems:     state.evidenceItems,
       flags:             state.flags,
     }));
     flashHudBtn(els.btnSave);
