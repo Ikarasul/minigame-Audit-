@@ -971,10 +971,46 @@ document.addEventListener('keydown', e => {
 // ────────────────────────────────────────────────────────────────
 
 
-// Log Database Minigame
+// ─── Utility: shuffle / random ──────────────────────────────
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+function pickRandom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function randTime(hour = 2) {
+  const m = String(Math.floor(Math.random() * 60)).padStart(2, '0');
+  const s = String(Math.floor(Math.random() * 60)).padStart(2, '0');
+  const h = String(hour).padStart(2, '0');
+  return `${h}:${m}:${s}`;
+}
+
+// Log Database Minigame — data-driven, randomized each replay
 let selectedLogRows = [];
 let logHintsLeft = 2;
-const CORRECT_PAIR = ['OAT_Admin', 'MANA_Dev'];
+const CORRECT_PAIR = ['OAT_Admin', 'MANA_Dev']; // fixed for story continuity
+
+const LOG_USER_POOL = [
+  { user: 'NUN_Senior',  action: 'VIEW_REPORT' },
+  { user: 'ALICE_Dev',   action: 'READ_API' },
+  { user: 'SYS_Cron',    action: 'BACKUP_DB', fixedIp: 'localhost' },
+  { user: 'BOB_Sales',   action: 'EXPORT_CSV' },
+  { user: 'TONY_QA',     action: 'RUN_TEST' },
+  { user: 'LEE_Finance', action: 'VIEW_LEDGER' },
+  { user: 'KIM_HR',      action: 'SEARCH_EMP' },
+  { user: 'WEB_Service', action: 'FETCH_HOOK', fixedIp: '10.0.0.1' },
+];
+const SHARED_IP_POOL = ['192.168.1.105', '10.0.0.42', '172.16.3.77', '192.168.2.88'];
+const DISTRACTOR_IP_POOL = [
+  '192.168.1.50', '10.0.0.44', '172.16.1.20', '192.168.3.12',
+  '10.0.1.99', '172.16.2.55', '192.168.4.21', '10.0.2.11',
+];
+
+let currentSharedIp = '192.168.1.105';
+let logRowEls = [];
 
 function setLogFeedback(msg, kind) {
   const el = document.getElementById('log-feedback');
@@ -992,11 +1028,83 @@ function updateSuspicion() {
   els.btnConfirmLog.disabled = !(correctCount === 2 && selectedLogRows.length === 2);
 }
 
+function buildLogRows() {
+  currentSharedIp = pickRandom(SHARED_IP_POOL);
+  const distractors = shuffle([...LOG_USER_POOL]).slice(0, 5);
+  const noiseIps = shuffle([...DISTRACTOR_IP_POOL]);
+
+  const rows = [
+    { user: 'OAT_Admin', ip: currentSharedIp, action: 'PULL_DATA', time: randTime(2) },
+    { user: 'MANA_Dev',  ip: currentSharedIp, action: 'PULL_DATA', time: randTime(2) },
+  ];
+  distractors.forEach((u, i) => {
+    rows.push({
+      user: u.user,
+      ip: u.fixedIp || noiseIps[i],
+      action: u.action,
+      time: randTime(pickRandom([1, 2, 2, 2, 3])),
+    });
+  });
+  return shuffle(rows);
+}
+
+function renderLogTable(rows) {
+  const tbody = document.querySelector('#log-table tbody');
+  tbody.innerHTML = '';
+  rows.forEach(r => {
+    const tr = document.createElement('tr');
+    tr.dataset.user = r.user;
+    tr.dataset.ip   = r.ip;
+    tr.innerHTML = `<td>${r.time}</td><td>${r.user}</td><td>${r.ip}</td><td>${r.action}</td>`;
+    tbody.appendChild(tr);
+  });
+  logRowEls = Array.from(tbody.querySelectorAll('tr'));
+  attachLogRowHandlers();
+}
+
+function attachLogRowHandlers() {
+  logRowEls.forEach(row => {
+    row.addEventListener('mouseenter', () => {
+      const ip = row.dataset.ip;
+      if (!ip || ip === 'localhost') return;
+      logRowEls.forEach(r => {
+        if (r.dataset.ip === ip) r.classList.add('ip-match');
+      });
+    });
+    row.addEventListener('mouseleave', () => {
+      logRowEls.forEach(r => r.classList.remove('ip-match'));
+    });
+    row.addEventListener('click', () => {
+      const user = row.dataset.user;
+      const idx = selectedLogRows.indexOf(user);
+      if (idx > -1) {
+        selectedLogRows.splice(idx, 1);
+        row.classList.remove('selected');
+      } else {
+        if (selectedLogRows.length >= 2) {
+          setLogFeedback('เลือกได้แค่ 2 แถวเท่านั้น ยกเลิกแถวก่อนหน้าก่อน', 'hint');
+          return;
+        }
+        selectedLogRows.push(user);
+        row.classList.add('selected');
+        if (!CORRECT_PAIR.includes(user)) {
+          row.classList.add('wrong-pick');
+          setTimeout(() => row.classList.remove('wrong-pick'), 400);
+          setLogFeedback('แถวนี้ IP ไม่ซ้ำกับใครในตาราง ลองดูคอลัมน์ IP Address อีกที', 'bad');
+        } else {
+          setLogFeedback('น่าสนใจ... แถวนี้มีอะไรบางอย่าง 🔎', 'good');
+        }
+      }
+      updateSuspicion();
+    });
+  });
+}
+
 function openLogMinigame() {
   els.logMinigameModal.classList.remove('hidden');
   selectedLogRows = [];
   logHintsLeft = 2;
-  els.logTableRows.forEach(row => row.classList.remove('selected', 'wrong-pick', 'ip-match'));
+  renderLogTable(buildLogRows());
   els.btnConfirmLog.disabled = true;
   setLogFeedback('');
   updateSuspicion();
@@ -1009,44 +1117,6 @@ function openLogMinigame() {
 
 els.closeLogMinigame.addEventListener('click', () => closeModal(els.logMinigameModal));
 
-// Hover: highlight other rows with same IP
-els.logTableRows.forEach(row => {
-  row.addEventListener('mouseenter', () => {
-    const ip = row.getAttribute('data-ip');
-    if (!ip || ip === 'localhost') return;
-    els.logTableRows.forEach(r => {
-      if (r.getAttribute('data-ip') === ip) r.classList.add('ip-match');
-    });
-  });
-  row.addEventListener('mouseleave', () => {
-    els.logTableRows.forEach(r => r.classList.remove('ip-match'));
-  });
-
-  row.addEventListener('click', () => {
-    const user = row.getAttribute('data-user');
-    const idx = selectedLogRows.indexOf(user);
-    if (idx > -1) {
-      selectedLogRows.splice(idx, 1);
-      row.classList.remove('selected');
-    } else {
-      if (selectedLogRows.length >= 2) {
-        setLogFeedback('เลือกได้แค่ 2 แถวเท่านั้น ยกเลิกแถวก่อนหน้าก่อน', 'hint');
-        return;
-      }
-      selectedLogRows.push(user);
-      row.classList.add('selected');
-      if (!CORRECT_PAIR.includes(user)) {
-        row.classList.add('wrong-pick');
-        setTimeout(() => row.classList.remove('wrong-pick'), 400);
-        setLogFeedback('แถวนี้ IP ไม่ซ้ำกับใคร ลองดูคอลัมน์ IP Address อีกที', 'bad');
-      } else {
-        setLogFeedback('น่าสนใจ... แถวนี้มีอะไรบางอย่าง 🔎', 'good');
-      }
-    }
-    updateSuspicion();
-  });
-});
-
 const btnLogHint = document.getElementById('btn-log-hint');
 if (btnLogHint) {
   btnLogHint.addEventListener('click', () => {
@@ -1054,9 +1124,9 @@ if (btnLogHint) {
     logHintsLeft--;
     document.getElementById('hint-count').textContent = `(${logHintsLeft})`;
     if (logHintsLeft === 1) {
-      setLogFeedback('💡 คำใบ้: เรียงจาก IP Address ดู — มี IP หนึ่งตัวที่ปรากฏ 2 ครั้งจากคนละ User', 'hint');
+      setLogFeedback('💡 คำใบ้: เรียงจาก IP Address — หา IP ที่ปรากฏ 2 ครั้งจากคนละ User', 'hint');
     } else {
-      setLogFeedback('💡 คำใบ้: 192.168.1.105 คือ IP ที่ถูกใช้ซ้ำ', 'hint');
+      setLogFeedback(`💡 คำใบ้: IP ${currentSharedIp} คือ IP ที่ถูกใช้ซ้ำ`, 'hint');
       btnLogHint.disabled = true;
     }
   });
@@ -1068,10 +1138,10 @@ els.btnConfirmLog.addEventListener('click', () => {
     id:          'ev-access-log',
     tag:         'หลักฐานดิจิทัล',
     title:       'Access Log (IP ซ้ำซ้อน)',
-    description: 'OAT_Admin และ MANA_Dev ล็อกอินจาก IP เดียวกันในเวลาใกล้เคียงกัน',
+    description: `OAT_Admin และ MANA_Dev ล็อกอินจาก IP ${currentSharedIp} เดียวกันในเวลาใกล้เคียงกัน`,
     flagged: true,
   });
-  showGameAlert('พบหลักฐาน!', 'OAT_Admin และ MANA_Dev ล็อกอินจาก IP 192.168.1.105 เดียวกันในเวลาใกล้เคียงกัน — น่าสงสัยมาก!', () => {
+  showGameAlert('พบหลักฐาน!', `OAT_Admin และ MANA_Dev ล็อกอินจาก IP ${currentSharedIp} เดียวกันในเวลาใกล้เคียงกัน — น่าสงสัยมาก!`, () => {
     goTo('chapter2_1');
   }, 'success');
 });
@@ -1138,16 +1208,60 @@ const EMAIL_DATA = {
     body: 'ทีม audit ประชุมสั้นๆ ตอนเช้าเรื่องแผนตรวจประจำไตรมาส\nไม่เกิน 30 นาที ห้องประชุม 14B',
     suspect: false,
   },
+  invoice: {
+    subject: 'Invoice #INV-2048 — AWS Quarterly Billing',
+    from: 'billing@amazon.com',
+    external: true,
+    time: '03:12',
+    body: 'Dear Customer,\n\nYour quarterly AWS bill is ready. Amount due: USD 12,480.00\nDue date: end of month. Pay via corporate account as usual.\n\nInvoice: INV-2048\n\n— AWS Billing Team\n(ภายนอก แต่เป็นใบแจ้งหนี้จริงของบริษัท ไม่ใช่การขายข้อมูล)',
+    suspect: false,
+  },
+  vendor: {
+    subject: 'Re: ขอรายชื่อผู้ติดต่อฝ่ายจัดซื้อ',
+    from: 'sales@techvendor.co.th',
+    external: true,
+    time: 'เมื่อวาน',
+    body: 'สวัสดีครับ รบกวนขอเบอร์ติดต่อฝ่ายจัดซื้อหน่อยครับ เราอยากเสนอราคาซอฟต์แวร์\n\n— Sales Team, TechVendor\n(External vendor ขอข้อมูลทั่วไป ไม่เข้าข่ายทุจริต)',
+    suspect: false,
+  },
 };
 
 let selectedEmail = null;
 
+function renderEmailList(keys) {
+  const list = document.querySelector('.email-list');
+  if (!list) return;
+  list.innerHTML = '';
+  keys.forEach(key => {
+    const e = EMAIL_DATA[key];
+    if (!e) return;
+    const senderText = e.from.includes('<')
+      ? e.from.split('<')[0].trim()
+      : e.from;
+    const div = document.createElement('div');
+    div.className = 'email-item' + (key === 'suspect' ? ' unread' : '');
+    div.dataset.email = key;
+    div.innerHTML = `
+      <div class="email-subject">${e.subject}</div>
+      <div class="email-sender">${senderText} · ${e.time}</div>
+    `;
+    div.addEventListener('click', () => {
+      document.querySelectorAll('.email-item').forEach(el => el.classList.remove('active'));
+      div.classList.add('active');
+      div.classList.remove('unread');
+      selectedEmail = key;
+      renderEmailPreview(key);
+    });
+    list.appendChild(div);
+  });
+}
+
 function openEmailMiniGame() {
   els.emailModal.classList.remove('hidden');
   selectedEmail = null;
-  document.querySelectorAll('.email-item').forEach(el => el.classList.remove('active'));
+  renderEmailList(shuffle(Object.keys(EMAIL_DATA)));
   document.getElementById('email-preview').innerHTML =
-    '<div class="email-empty">📬 เลือกอีเมลด้านซ้ายเพื่ออ่านเนื้อหา แล้วประเมินว่าเป็นอีเมลน่าสงสัยหรือไม่</div>';
+    '<div class="email-empty">📬 เลือกอีเมลด้านซ้ายเพื่ออ่านเนื้อหา แล้วประเมินว่าเป็นอีเมลน่าสงสัยหรือไม่<br><br><span style="opacity:.7">💡 ระวัง: อีเมลจาก external domain ไม่ได้แปลว่าทุจริตเสมอไป ดูเนื้อหาด้วย</span></div>';
 }
 
 function renderEmailPreview(key) {
@@ -1203,18 +1317,6 @@ function judgeEmail(key, flagged) {
 if (els.closeEmailMinigame) {
   els.closeEmailMinigame.addEventListener('click', () => closeModal(els.emailModal));
 }
-
-document.querySelectorAll('.email-item').forEach(item => {
-  item.addEventListener('click', () => {
-    const key = item.dataset.email;
-    if (!key) return;
-    document.querySelectorAll('.email-item').forEach(el => el.classList.remove('active'));
-    item.classList.add('active');
-    item.classList.remove('unread');
-    selectedEmail = key;
-    renderEmailPreview(key);
-  });
-});
 
 // Final Quiz Logic
 let quizScore = 0;
